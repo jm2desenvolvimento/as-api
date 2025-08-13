@@ -1,0 +1,176 @@
+import { PrismaClient } from '@prisma/client';
+import { DEFAULT_ROLE_PERMISSIONS, ALL_PERMISSIONS } from '../src/modules/auth/constants/permissions';
+
+const prisma = new PrismaClient();
+
+async function syncPermissions(): Promise<void> {
+  console.log('🔄 Sincronizando permissões...');
+  
+  for (const permissionName of ALL_PERMISSIONS) {
+    await prisma.permission.upsert({
+      where: { name: permissionName },
+      update: { 
+        description: getPermissionDescription(permissionName),
+        is_active: true 
+      },
+      create: {
+        name: permissionName,
+        description: getPermissionDescription(permissionName),
+        is_active: true,
+      },
+    });
+  }
+  
+  console.log(`✅ ${ALL_PERMISSIONS.length} permissões sincronizadas`);
+}
+
+// Roles agora são enum no Prisma, não precisam ser sincronizados
+
+async function syncRolePermissions(): Promise<void> {
+  console.log('🔄 Sincronizando permissões de roles...');
+  
+  for (const [roleName, permissions] of Object.entries(DEFAULT_ROLE_PERMISSIONS)) {
+    // Limpar permissões existentes para este role
+    await prisma.role_permission.deleteMany({ where: { role: roleName as any } });
+    
+    // Adicionar novas permissões
+    for (const permissionName of permissions) {
+      const permission = await prisma.permission.findUnique({ 
+        where: { name: permissionName } 
+      });
+      
+      if (permission) {
+        await prisma.role_permission.create({
+          data: {
+            role: roleName as any,
+            permission_id: permission.id,
+          },
+        });
+      }
+    }
+    
+    console.log(`✅ Role ${roleName}: ${permissions.length} permissões configuradas`);
+  }
+}
+
+function getPermissionDescription(permission: string): string {
+  const descriptions: Record<string, string> = {
+    // User permissions
+    'user.create': 'Criar usuários',
+    'user.read': 'Visualizar usuários',
+    'user.update': 'Atualizar usuários',
+    'user.delete': 'Deletar usuários',
+    'user.list': 'Listar usuários',
+    'user.activate': 'Ativar usuários',
+    'user.deactivate': 'Desativar usuários',
+    
+    // Profile permissions
+    'profile.create': 'Criar perfis',
+    'profile.read': 'Visualizar perfis',
+    'profile.update': 'Atualizar perfis',
+    'profile.delete': 'Deletar perfis',
+    'profile.list': 'Listar perfis',
+    
+    // Patient permissions
+    'patient.create': 'Criar pacientes',
+    'patient.read': 'Visualizar pacientes',
+    'patient.update': 'Atualizar pacientes',
+    'patient.delete': 'Deletar pacientes',
+    'patient.list': 'Listar pacientes',
+    'patient.medical_history': 'Ver histórico médico',
+    
+    // Doctor permissions
+    'doctor.create': 'Criar médicos',
+    'doctor.read': 'Visualizar médicos',
+    'doctor.update': 'Atualizar médicos',
+    'doctor.delete': 'Deletar médicos',
+    'doctor.list': 'Listar médicos',
+    'doctor.schedule': 'Gerenciar agendas',
+    
+    // Appointment permissions
+    'appointment.create': 'Criar agendamentos',
+    'appointment.read': 'Visualizar agendamentos',
+    'appointment.update': 'Atualizar agendamentos',
+    'appointment.delete': 'Deletar agendamentos',
+    'appointment.list': 'Listar agendamentos',
+    'appointment.confirm': 'Confirmar agendamentos',
+    'appointment.cancel': 'Cancelar agendamentos',
+    
+    // Medical record permissions
+    'medical_record.create': 'Criar prontuários',
+    'medical_record.read': 'Visualizar prontuários',
+    'medical_record.update': 'Atualizar prontuários',
+    'medical_record.delete': 'Deletar prontuários',
+    'medical_record.list': 'Listar prontuários',
+    'medical_record.view_all': 'Ver todos os prontuários',
+    
+    // Health unit permissions
+    'health_unit.create': 'Criar unidades de saúde',
+    'health_unit.read': 'Visualizar unidades de saúde',
+    'health_unit.update': 'Atualizar unidades de saúde',
+    'health_unit.delete': 'Deletar unidades de saúde',
+    'health_unit.list': 'Listar unidades de saúde',
+    'health_unit.manage': 'Gerenciar unidades de saúde',
+    
+    // Specialty permissions
+    'specialty.create': 'Criar especialidades',
+    'specialty.read': 'Visualizar especialidades',
+    'specialty.update': 'Atualizar especialidades',
+    'specialty.delete': 'Deletar especialidades',
+    'specialty.list': 'Listar especialidades',
+    
+    // City permissions
+    'city.create': 'Criar cidades',
+    'city.read': 'Visualizar cidades',
+    'city.update': 'Atualizar cidades',
+    'city.delete': 'Deletar cidades',
+    'city.list': 'Listar cidades',
+    
+    // Cityhall permissions
+    'cityhall.create': 'Criar prefeituras',
+    'cityhall.read': 'Visualizar prefeituras',
+    'cityhall.update': 'Atualizar prefeituras',
+    'cityhall.delete': 'Deletar prefeituras',
+    'cityhall.list': 'Listar prefeituras',
+    
+    // Admin permissions
+    'admin.dashboard': 'Acessar dashboard admin',
+    'admin.reports': 'Gerar relatórios',
+    'admin.system_config': 'Configurar sistema',
+    'admin.user_management': 'Gerenciar usuários',
+    'admin.backup': 'Fazer backup',
+    'admin.logs': 'Ver logs do sistema',
+    
+    // RBAC permissions
+    'rbac.manage_permissions': 'Gerenciar permissões',
+    'rbac.manage_roles': 'Gerenciar roles',
+    'rbac.view_permissions': 'Visualizar permissões',
+    
+    // System permissions
+    'system.maintain': 'Manter sistema',
+    'system.monitor': 'Monitorar sistema',
+    'system.configure': 'Configurar sistema',
+  };
+  
+  return descriptions[permission] || permission;
+}
+
+async function main() {
+  try {
+    console.log('🚀 Iniciando sincronização RBAC...');
+    
+    await syncPermissions();
+    // Roles são agora enum, não precisam sync
+    await syncRolePermissions();
+    
+    console.log('✅ Sincronização RBAC concluída com sucesso!');
+    
+  } catch (error) {
+    console.error('❌ Erro na sincronização RBAC:', error);
+    process.exit(1);
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+main(); 

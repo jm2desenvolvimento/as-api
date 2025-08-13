@@ -1,0 +1,362 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model user {
+  id             String            @id @default(uuid()) @map("id")
+  email          String            @unique @map("email")
+  password       String            @map("password")
+  cpf            String            @unique @map("cpf")
+  is_active      Boolean           @default(true) @map("is_active")
+  created_at     DateTime          @default(now()) @map("created_at")
+  updated_at     DateTime          @updatedAt @map("updated_at")
+  role           UserRole          @default(PATIENT) @map("role")
+  city_id        String?           @map("city_id")
+  health_unit_id String?           @map("health_unit_id")
+  allowed        Json              @default("{}") @map("allowed")
+  profile        profile?
+  
+  // Relacionamentos com escalas médicas
+  doctor_schedules     medical_schedule[] @relation("DoctorSchedules")        // Escalas como médico principal
+  substitute_schedules medical_schedule[] @relation("SubstituteDoctorSchedules") // Escalas como médico substituto
+}
+
+model profile {
+  id             String            @id @default(uuid()) @map("id")
+  created_at     DateTime          @default(now()) @map("created_at")
+  updated_at     DateTime          @updatedAt @map("updated_at")
+  user_id        String            @unique @map("user_id")
+  avatar_url     String?           @map("avatar_url")
+  birth_date     DateTime?         @map("birth_date")
+  document_type  String?           @map("document_type")
+  gender         String?           @map("gender")
+  name           String            @map("name")
+  sus_card       String?           @map("sus_card")
+  user           user              @relation(fields: [user_id], references: [id])
+  profile_phones profile_phone[]
+  profile_emails profile_email[]
+  profile_addresses profile_address[]
+  profile_doctor profile_doctor?
+  
+  // Relacionamentos com prontuário médico
+  patient_records      medical_record[] @relation("PatientMedicalRecords")    // Paciente do prontuário
+  doctor_consultations consultation[]  @relation("DoctorConsultations")      // Médico da consulta
+  doctor_medications   medication[]    @relation("DoctorMedications")        // Médico que prescreveu medicamentos
+  doctor_exams         exam[]          @relation("DoctorExams")              // Médico que solicitou exames
+  uploaded_documents   document[]      @relation("UploaderDocuments")          // Usuário que fez upload de documentos
+  
+  // Relacionamentos com escalas médicas (removidos - agora são feitos via user)
+}
+
+model profile_phone {
+  id          String   @id @default(uuid()) @map("id")
+  profile_id  String   @map("profile_id")
+  is_primary  Boolean  @default(false) @map("is_primary")
+  created_at  DateTime @default(now()) @map("created_at")
+  phone       String   @map("phone")
+  phone_type  String   @map("phone_type")
+  updated_at  DateTime @updatedAt @map("updated_at")
+  profile     profile  @relation(fields: [profile_id], references: [id])
+}
+
+model profile_email {
+  id          String   @id @default(uuid()) @map("id")
+  profile_id  String   @map("profile_id")
+  email       String   @map("email")
+  is_primary  Boolean  @default(false) @map("is_primary")
+  created_at  DateTime @default(now()) @map("created_at")
+  updated_at  DateTime @updatedAt @map("updated_at")
+  profile     profile  @relation(fields: [profile_id], references: [id])
+}
+
+model profile_address {
+  id           String   @id @default(uuid()) @map("id")
+  profile_id   String   @map("profile_id")
+  complement   String?  @map("complement")
+  city         String   @map("city")
+  state        String   @map("state")
+  zip_code     String   @map("zip_code")
+  is_primary   Boolean  @default(false) @map("is_primary")
+  created_at   DateTime @default(now()) @map("created_at")
+  address      String   @map("address")
+  address_type String   @map("address_type")
+  updated_at   DateTime @updatedAt @map("updated_at")
+  district     String?  @map("district")
+  number       String?  @map("number")
+  profile      profile  @relation(fields: [profile_id], references: [id])
+}
+
+model profile_doctor {
+  id         String   @id @default(uuid()) @map("id")
+  profile_id String   @unique @map("profile_id")
+  crm_number String   @map("crm_number")
+  crm_uf     String   @map("crm_uf")
+  specialty  String   @map("specialty") // ✅ ESPECIALIDADE DO MÉDICO
+  created_at DateTime @default(now()) @map("created_at")
+  updated_at DateTime @updatedAt @map("updated_at")
+  profile    profile  @relation(fields: [profile_id], references: [id])
+}
+
+// RBAC Tables
+enum UserRole {
+  MASTER
+  ADMIN
+  DOCTOR
+  PATIENT
+}
+
+model permission {
+  id               String            @id @default(uuid()) @map("id")
+  name             String            @unique @map("name")
+  description      String?           @map("description")
+  resource         String?           @map("resource")
+  action           String?           @map("action")
+  is_active        Boolean           @default(true) @map("is_active")
+  created_at       DateTime          @default(now()) @map("created_at")
+  updated_at       DateTime          @updatedAt @map("updated_at")
+  role_permissions role_permission[]
+}
+
+model role_permission {
+  id            String     @id @default(uuid()) @map("id")
+  role          UserRole   @map("role")
+  permission_id String     @map("permission_id")
+  created_at    DateTime   @default(now()) @map("created_at")
+  permission    permission @relation(fields: [permission_id], references: [id], onDelete: Cascade)
+  
+  @@unique([role, permission_id])
+}
+
+model city_hall {
+  id           String        @id @default(uuid()) @db.Uuid
+  name         String
+  cnpj         String
+  email        String
+  phone        String
+  address      String
+  city         String
+  state        String
+  zip_code     String
+  active       Boolean       @default(true)
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
+
+  health_units health_unit[]
+}
+
+model health_unit {
+  id           String    @id @default(uuid()) @map("id") @db.Uuid
+  name         String    @map("name")
+  address      String    @map("address")
+  city         String    @map("city")
+  state        String    @map("state")
+  zip_code     String    @map("zip_code")
+  phone        String?   @map("phone")
+  email        String?   @map("email")
+  created_at   DateTime  @default(now()) @map("created_at")
+  updated_at   DateTime  @updatedAt @map("updated_at")
+  city_hall_id String    @map("city_hall_id") @db.Uuid
+  city_hall    city_hall @relation(fields: [city_hall_id], references: [id])
+  // Relacionamentos
+  medical_records medical_record[]
+  medical_schedules medical_schedule[] // Escalas médicas da unidade de saúde
+  // appointments    appointment[]
+  // doctors         doctor_health_unit[]
+  // patients        user[] @relation("HealthUnitPatients")
+
+  @@map("health_unit")
+}
+
+// Enums para os modelos de prontuário médico
+enum ConsultationStatus {
+  scheduled
+  completed
+  cancelled
+}
+
+enum MedicationStatus {
+  active
+  completed
+  discontinued
+}
+
+enum ExamStatus {
+  scheduled
+  pending
+  completed
+  cancelled
+}
+
+// Tabela principal de prontuário médico
+model medical_record {
+  id                 String       @id @default(uuid()) @map("id")
+  patient_id         String       @map("patient_id")
+  health_unit_id     String       @map("health_unit_id") @db.Uuid
+  patient_name       String       @map("patient_name")
+  patient_cpf        String?      @map("patient_cpf")
+  patient_birth_date String?      @map("patient_birth_date")
+  patient_gender     String?      @map("patient_gender")
+  patient_phone      String?      @map("patient_phone")
+  patient_email      String?      @map("patient_email")
+  patient_address    String?      @map("patient_address")
+  blood_type         String?      @map("blood_type")
+  height             Float?       @map("height")
+  weight             Float?       @map("weight")
+  allergies          String[]     @default([]) @map("allergies")
+  chronic_diseases   String[]     @default([]) @map("chronic_diseases")
+  is_active          Boolean      @default(true) @map("is_active")
+  created_at         DateTime     @default(now()) @map("created_at")
+  updated_at         DateTime     @updatedAt @map("updated_at")
+  
+  // Relacionamentos
+  patient            profile      @relation("PatientMedicalRecords", fields: [patient_id], references: [id])
+  health_unit        health_unit  @relation(fields: [health_unit_id], references: [id])
+  
+  // Relacionamentos com outras tabelas do prontuário
+  consultations      consultation[]
+  medications        medication[]
+  exams              exam[]
+  documents          document[]
+}
+
+// Tabela de consultas médicas
+model consultation {
+  id                 String       @id @default(uuid()) @map("id")
+  medical_record_id  String       @map("medical_record_id")
+  doctor_id          String       @map("doctor_id")
+  doctor_name        String       @map("doctor_name")
+  specialty          String       @map("specialty")
+  date               DateTime     @map("date")
+  reason             String?      @map("reason")
+  diagnosis          String?      @map("diagnosis")
+  prescription       String?      @map("prescription")
+  notes              String?      @map("notes")
+  follow_up          String?      @map("follow_up")
+  status             ConsultationStatus @default(scheduled) @map("status")
+  created_at         DateTime     @default(now()) @map("created_at")
+  updated_at         DateTime     @updatedAt @map("updated_at")
+  
+  // Relacionamentos
+  medical_record     medical_record @relation(fields: [medical_record_id], references: [id])
+  doctor             profile        @relation("DoctorConsultations", fields: [doctor_id], references: [id])
+}
+
+// Tabela de medicamentos
+model medication {
+  id                 String       @id @default(uuid()) @map("id")
+  medical_record_id  String       @map("medical_record_id")
+  name               String       @map("name")
+  dosage             String       @map("dosage")
+  frequency          String       @map("frequency")
+  start_date         DateTime     @map("start_date")
+  end_date           DateTime?    @map("end_date")
+  prescribed_by      String?      @map("prescribed_by") // ID do médico
+  doctor_name        String?      @map("doctor_name")
+  instructions       String?      @map("instructions")
+  active             Boolean      @default(true) @map("active")
+  status             MedicationStatus @default(active) @map("status")
+  created_at         DateTime     @default(now()) @map("created_at")
+  updated_at         DateTime     @updatedAt @map("updated_at")
+  
+  // Relacionamentos
+  medical_record     medical_record @relation(fields: [medical_record_id], references: [id])
+  doctor             profile?       @relation("DoctorMedications", fields: [prescribed_by], references: [id])
+}
+
+// Tabela de exames médicos
+model exam {
+  id                 String       @id @default(uuid()) @map("id")
+  medical_record_id  String       @map("medical_record_id")
+  name               String       @map("name")
+  type               String?      @map("type")
+  date               DateTime     @map("date")
+  lab                String?      @map("lab")
+  laboratory         String?      @map("laboratory")
+  result             String?      @map("result")
+  results            String?      @map("results")
+  doctor_name        String?      @map("doctor_name")
+  requested_by       String?      @map("requested_by") // ID do médico
+  file_url           String?      @map("file_url")
+  status             ExamStatus   @default(scheduled) @map("status")
+  created_at         DateTime     @default(now()) @map("created_at")
+  updated_at         DateTime     @updatedAt @map("updated_at")
+  
+  // Relacionamentos
+  medical_record     medical_record @relation(fields: [medical_record_id], references: [id])
+  doctor             profile?       @relation("DoctorExams", fields: [requested_by], references: [id])
+}
+
+// Tabela de documentos médicos
+model document {
+  id                 String       @id @default(uuid()) @map("id")
+  medical_record_id  String       @map("medical_record_id")
+  name               String       @map("name")
+  type               String?      @map("type") // atestado, receita, laudo, etc.
+  date               DateTime     @map("date")
+  description        String?      @map("description")
+  url                String?      @map("url")
+  file_url           String?      @map("file_url")
+  size               String?      @map("size")
+  added_by           String?      @map("added_by") // Nome de quem adicionou
+  uploaded_by        String?      @map("uploaded_by") // ID do usuário
+  created_at         DateTime     @default(now()) @map("created_at")
+  updated_at         DateTime     @updatedAt @map("updated_at")
+  
+  // Relacionamentos
+  medical_record     medical_record @relation(fields: [medical_record_id], references: [id])
+  uploader           profile?       @relation("UploaderDocuments", fields: [uploaded_by], references: [id])
+}
+
+// Enum para status das escalas médicas
+enum MedicalScheduleStatus {
+  pending
+  confirmed
+  temporary
+  cancelled
+}
+
+// Enum para tipos de recorrência
+enum RecurrenceType {
+  none
+  daily
+  weekly
+  monthly
+}
+
+// Tabela de escalas médicas
+model medical_schedule {
+  id                    String                @id @default(uuid()) @map("id")
+  doctor_id             String                @map("doctor_id")
+  health_unit_id        String                @map("health_unit_id") @db.Uuid
+  start_datetime        DateTime              @map("start_datetime")
+  end_datetime          DateTime              @map("end_datetime")
+  status                MedicalScheduleStatus @default(pending) @map("status")
+  total_slots           Int                   @map("total_slots")
+  available_slots       Int                   @map("available_slots")
+  is_recurring          Boolean               @default(false) @map("is_recurring")
+  recurrence_type       RecurrenceType?       @default(none) @map("recurrence_type")
+  recurrence_end_date   DateTime?             @map("recurrence_end_date")
+  recurrence_weekdays   String?               @map("recurrence_weekdays") // JSON string com dias da semana
+  // Suporte a recorrência avançada (RRULE)
+  rrule                 String?               @map("rrule")
+  exdates               String[]              @default([]) @map("exdates")
+  timezone              String?               @map("timezone")
+  substitute_doctor_id  String?               @map("substitute_doctor_id")
+  notes                 String?               @map("notes")
+  created_at            DateTime              @default(now()) @map("created_at")
+  updated_at            DateTime              @updatedAt @map("updated_at")
+  
+  // Relacionamentos
+  doctor                user                  @relation("DoctorSchedules", fields: [doctor_id], references: [id])
+  health_unit           health_unit           @relation(fields: [health_unit_id], references: [id])
+  substitute_doctor     user?                 @relation("SubstituteDoctorSchedules", fields: [substitute_doctor_id], references: [id])
+  
+  @@map("medical_schedule")
+}
+
+ 
