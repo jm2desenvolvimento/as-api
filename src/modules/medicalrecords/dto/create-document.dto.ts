@@ -18,9 +18,9 @@ export class CreateDocumentDto {
   type: string;
 
   @IsString()
-  @MinLength(10, { message: 'Caminho do arquivo deve ter pelo menos 10 caracteres' })
-  @MaxLength(500, { message: 'Caminho do arquivo não pode exceder 500 caracteres' })
-  file_path: string;
+  @MinLength(10, { message: 'URL do arquivo deve ter pelo menos 10 caracteres' })
+  @MaxLength(500, { message: 'URL do arquivo não pode exceder 500 caracteres' })
+  file_url: string;
 
   @IsOptional()
   @IsNumber({}, { message: 'Tamanho do arquivo deve ser um número válido' })

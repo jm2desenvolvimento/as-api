@@ -7,6 +7,7 @@ export { CreateConsultationDto } from './create-consultation.dto';
 export { CreateMedicationDto } from './create-medication.dto';
 export { CreateExamDto } from './create-exam.dto';
 export { CreateDocumentDto } from './create-document.dto';
+export { UploadFileDto } from './upload-file.dto';
 
 // DTOs de atualização para entidades relacionadas (usando PartialType)
 import { PartialType } from '@nestjs/mapped-types';

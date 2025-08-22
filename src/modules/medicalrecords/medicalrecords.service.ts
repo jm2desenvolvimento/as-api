@@ -47,15 +47,50 @@ export class MedicalRecordsService {
         patient: {
           include: {
             profile_phones: true,
-            profile_addresses: true
+            profile_addresses: true,
+            profile_emails: true,
+            user: {
+              select: {
+                id: true,
+                email: true,
+                cpf: true
+              }
+            }
           }
         },
         health_unit: true,
+        // ✅ INCLUINDO: Consultas, medicamentos, exames e documentos
+        consultations: {
+          orderBy: { date: 'desc' }
+        },
+        medications: {
+          orderBy: { start_date: 'desc' }
+        },
+        exams: {
+          orderBy: { date: 'desc' }
+        },
+        documents: {
+          orderBy: { date: 'desc' }
+        }
       },
     });
 
     if (medicalRecord) {
       console.log(`✅ [ENCONTRADO] Prontuário encontrado diretamente com profile.id: ${medicalRecord.id}`);
+      console.log(`🔍 [DEBUG] Patient data:`, medicalRecord.patient);
+      console.log(`🔍 [DEBUG] Patient user data:`, medicalRecord.patient?.user);
+      console.log(`🔍 [DEBUG] Patient profile emails:`, medicalRecord.patient?.profile_emails);
+      console.log(`🔍 [DEBUG] Patient user_id:`, medicalRecord.patient?.user_id);
+      console.log(`🔍 [DEBUG] Email mapping:`, {
+        userEmail: medicalRecord.patient?.user?.email,
+        profileEmails: medicalRecord.patient?.profile_emails,
+        firstProfileEmail: medicalRecord.patient?.profile_emails?.[0]?.email,
+        user_id: medicalRecord.patient?.user_id
+      });
+      console.log(`🔍 [DEBUG] Consultas encontradas: ${medicalRecord.consultations?.length || 0}`);
+      console.log(`🔍 [DEBUG] Medicamentos encontrados: ${medicalRecord.medications?.length || 0}`);
+      console.log(`🔍 [DEBUG] Exames encontrados: ${medicalRecord.exams?.length || 0}`);
+      console.log(`🔍 [DEBUG] Documentos encontrados: ${medicalRecord.documents?.length || 0}`);
       return medicalRecord;
     }
 
@@ -77,15 +112,50 @@ export class MedicalRecordsService {
           patient: {
             include: {
               profile_phones: true,
-              profile_addresses: true
+              profile_addresses: true,
+              profile_emails: true,
+              user: {
+                select: {
+                  id: true,
+                  email: true,
+                  cpf: true
+                }
+              }
             }
           },
           health_unit: true,
+          // ✅ INCLUINDO: Consultas, medicamentos, exames e documentos
+          consultations: {
+            orderBy: { date: 'desc' }
+          },
+          medications: {
+            orderBy: { start_date: 'desc' }
+          },
+          exams: {
+            orderBy: { date: 'desc' }
+          },
+          documents: {
+            orderBy: { date: 'desc' }
+          }
         },
       });
 
       if (medicalRecord) {
         console.log(`✅ [ENCONTRADO] Prontuário encontrado com profile.id derivado: ${medicalRecord.id}`);
+        console.log(`🔍 [DEBUG] Patient data:`, medicalRecord.patient);
+        console.log(`🔍 [DEBUG] Patient user data:`, medicalRecord.patient?.user);
+        console.log(`🔍 [DEBUG] Patient profile emails:`, medicalRecord.patient?.profile_emails);
+        console.log(`🔍 [DEBUG] Patient user_id:`, medicalRecord.patient?.user_id);
+        console.log(`🔍 [DEBUG] Email mapping:`, {
+          userEmail: medicalRecord.patient?.user?.email,
+          profileEmails: medicalRecord.patient?.profile_emails,
+          firstProfileEmail: medicalRecord.patient?.profile_emails?.[0]?.email,
+          user_id: medicalRecord.patient?.user_id
+        });
+        console.log(`🔍 [DEBUG] Consultas encontradas: ${medicalRecord.consultations?.length || 0}`);
+        console.log(`🔍 [DEBUG] Medicamentos encontrados: ${medicalRecord.medications?.length || 0}`);
+        console.log(`🔍 [DEBUG] Exames encontrados: ${medicalRecord.exams?.length || 0}`);
+        console.log(`🔍 [DEBUG] Documentos encontrados: ${medicalRecord.documents?.length || 0}`);
         return medicalRecord;
       }
     } else {
@@ -118,7 +188,14 @@ export class MedicalRecordsService {
       include: {
         profile_phones: true,
         profile_addresses: true,
-        user: true
+        profile_emails: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            cpf: true
+          }
+        }
       }
     });
 
@@ -147,7 +224,14 @@ export class MedicalRecordsService {
         include: {
           profile_phones: true,
           profile_addresses: true,
-          user: true
+          profile_emails: true,
+          user: {
+            select: {
+              id: true,
+              email: true,
+              cpf: true
+            }
+          }
         }
       });
     }
@@ -194,10 +278,23 @@ export class MedicalRecordsService {
         patient: {
           include: {
             profile_phones: true,
-            profile_addresses: true
+            profile_addresses: true,
+            profile_emails: true,
+            user: {
+              select: {
+                id: true,
+                email: true,
+                cpf: true
+              }
+            }
           }
         },
         health_unit: true,
+        // Garantir que a tipagem inclua as relações esperadas logo após a criação
+        consultations: true,
+        medications: true,
+        exams: true,
+        documents: true,
       },
     });
 
@@ -225,7 +322,20 @@ export class MedicalRecordsService {
     return this.prisma.medical_record.create({
       data,
       include: {
-        patient: true,
+        patient: {
+          include: {
+            profile_phones: true,
+            profile_addresses: true,
+            profile_emails: true,
+            user: {
+              select: {
+                id: true,
+                email: true,
+                cpf: true
+              }
+            }
+          }
+        },
         health_unit: true,
       },
     });
@@ -261,7 +371,20 @@ export class MedicalRecordsService {
       where: { id },
       data,
       include: {
-        patient: true,
+        patient: {
+          include: {
+            profile_phones: true,
+            profile_addresses: true,
+            profile_emails: true,
+            user: {
+              select: {
+                id: true,
+                email: true,
+                cpf: true
+              }
+            }
+          }
+        },
         health_unit: true,
       },
     });
@@ -286,7 +409,20 @@ export class MedicalRecordsService {
   async findAllMedicalRecords() {
     return this.prisma.medical_record.findMany({
       include: {
-        patient: true,
+        patient: {
+          include: {
+            profile_phones: true,
+            profile_addresses: true,
+            profile_emails: true,
+            user: {
+              select: {
+                id: true,
+                email: true,
+                cpf: true
+              }
+            }
+          }
+        },
         health_unit: true,
       },
     });
@@ -296,9 +432,6 @@ export class MedicalRecordsService {
   async findConsultationsByMedicalRecordId(medicalRecordId: string) {
     const consultations = await this.prisma.consultation.findMany({
       where: { medical_record_id: medicalRecordId },
-      include: {
-        doctor: true,
-      },
       orderBy: {
         date: 'desc',
       },
@@ -311,9 +444,6 @@ export class MedicalRecordsService {
   async findMedicationsByMedicalRecordId(medicalRecordId: string) {
     const medications = await this.prisma.medication.findMany({
       where: { medical_record_id: medicalRecordId },
-      include: {
-        doctor: true,
-      },
       orderBy: {
         start_date: 'desc',
       },
@@ -326,9 +456,6 @@ export class MedicalRecordsService {
   async findExamsByMedicalRecordId(medicalRecordId: string) {
     const exams = await this.prisma.exam.findMany({
       where: { medical_record_id: medicalRecordId },
-      include: {
-        doctor: true,
-      },
       orderBy: {
         date: 'desc',
       },
@@ -341,9 +468,6 @@ export class MedicalRecordsService {
   async findDocumentsByMedicalRecordId(medicalRecordId: string) {
     const documents = await this.prisma.document.findMany({
       where: { medical_record_id: medicalRecordId },
-      include: {
-        uploader: true,
-      },
       orderBy: {
         date: 'desc',
       },
@@ -373,9 +497,6 @@ export class MedicalRecordsService {
         medical_record_id: medicalRecordId,
         status: 'active'
       },
-      include: {
-        doctor: true,
-      },
       orderBy: {
         start_date: 'desc',
       },
@@ -392,9 +513,6 @@ export class MedicalRecordsService {
           gte: sixMonthsAgo
         }
       },
-      include: {
-        doctor: true,
-      },
       orderBy: {
         date: 'desc',
       },
@@ -409,9 +527,6 @@ export class MedicalRecordsService {
           gte: sixMonthsAgo
         }
       },
-      include: {
-        doctor: true,
-      },
       orderBy: {
         date: 'desc',
       },
@@ -422,9 +537,6 @@ export class MedicalRecordsService {
     const recentDocuments = await this.prisma.document.findMany({
       where: { 
         medical_record_id: medicalRecordId,
-      },
-      include: {
-        uploader: true,
       },
       orderBy: {
         date: 'desc',
@@ -462,7 +574,7 @@ export class MedicalRecordsService {
           id: cons.id,
           date: cons.date,
           reason: cons.reason,
-          doctor_name: cons.doctor?.name,
+          doctor_name: cons.doctor_name || 'Médico não informado',
         })),
         exams: recentExams.slice(0, 3).map(exam => ({
           id: exam.id,
@@ -496,9 +608,8 @@ export class MedicalRecordsService {
         reason: rest.reason,
         // Adicionando o campo diagnosis que estava faltando
         diagnosis: rest.diagnosis,
-        // Mapeando observations do DTO para notes do schema
+        // ✅ Mapeamento correto: observations → notes, prescriptions → prescription
         notes: rest.observations,
-        // Mapeando prescriptions do DTO para prescription do schema
         prescription: rest.prescriptions,
         status: rest.status as any || 'scheduled',
         medical_record: {
@@ -516,7 +627,6 @@ export class MedicalRecordsService {
       return this.prisma.consultation.create({
         data,
         include: {
-          doctor: true,
           medical_record: true
         }
       });
@@ -539,9 +649,8 @@ export class MedicalRecordsService {
         ...(rest.reason && { reason: rest.reason }),
         // Adicionando o campo diagnosis que estava faltando
         ...(rest.diagnosis !== undefined && { diagnosis: rest.diagnosis }),
-        // Mapeando observations do DTO para notes do schema
+        // ✅ Mapeamento correto: observations → notes, prescriptions → prescription
         ...(rest.observations !== undefined && { notes: rest.observations }),
-        // Mapeando prescriptions do DTO para prescription do schema
         ...(rest.prescriptions !== undefined && { prescription: rest.prescriptions }),
         ...(rest.status && { status: rest.status as any }),
         ...(medical_record_id && {
@@ -562,7 +671,6 @@ export class MedicalRecordsService {
         where: { id },
         data,
         include: {
-          doctor: true,
           medical_record: true
         }
       });
@@ -662,18 +770,41 @@ export class MedicalRecordsService {
 
   // ========== MÉTODOS CRUD PARA EXAMES ==========
   async createExam(createExamDto: any) {
-    const { medical_record_id, doctor_id, exam_date, ...rest } = createExamDto;
+    const { medical_record_id, doctor_id, date, ...rest } = createExamDto;
+    
+    // ✅ DEBUG: Verificar dados recebidos
+    console.log('[MedicalRecordsService] createExam - Dados recebidos:', {
+      medical_record_id,
+      doctor_id,
+      date,
+      rest
+    });
+    
+    // Buscar o nome do médico se doctor_id for fornecido
+    let doctorName = rest.doctor_name;
+    if (doctor_id && !doctorName) {
+      try {
+        const doctor = await this.prisma.user.findUnique({
+          where: { id: doctor_id },
+          select: { profile: { select: { name: true } } }
+        });
+        doctorName = doctor?.profile?.name || 'Médico';
+        console.log('[MedicalRecordsService] Nome do médico encontrado:', doctorName);
+      } catch (error) {
+        doctorName = 'Médico';
+        console.log('[MedicalRecordsService] Erro ao buscar médico, usando padrão:', error);
+      }
+    }
     
     const data: Prisma.examCreateInput = {
       name: rest.name,
       type: rest.type,
-      date: exam_date ? new Date(exam_date) : new Date(),
-      result: rest.result,
-      observations: rest.observations,
+      date: date ? new Date(date) : new Date(), // ✅ Corrigido: usa 'date'
+      results: rest.results, // ✅ Corrigido: usa 'results'
+      lab: rest.lab, // ✅ Adicionado: campo lab
+      doctor_name: doctorName || 'Médico', // ✅ Sempre preenchido
+      file_url: rest.file_url, // ✅ Adicionado: campo file_url
       status: rest.status as any || 'pending',
-      cost: rest.cost,
-      location: rest.location,
-      responsible_doctor: rest.responsible_doctor,
       medical_record: {
         connect: { id: medical_record_id }
       },
@@ -694,18 +825,31 @@ export class MedicalRecordsService {
   }
 
   async updateExam(id: string, updateExamDto: any) {
-    const { medical_record_id, doctor_id, exam_date, ...rest } = updateExamDto;
+    const { medical_record_id, doctor_id, date, ...rest } = updateExamDto;
+    
+    // Buscar o nome do médico se doctor_id for fornecido
+    let doctorName = rest.doctor_name;
+    if (doctor_id && !doctorName) {
+      try {
+        const doctor = await this.prisma.user.findUnique({
+          where: { id: doctor_id },
+          select: { profile: { select: { name: true } } }
+        });
+        doctorName = doctor?.profile?.name || 'Médico';
+      } catch (error) {
+        doctorName = 'Médico';
+      }
+    }
     
     const data: Prisma.examUpdateInput = {
       ...(rest.name && { name: rest.name }),
       ...(rest.type && { type: rest.type }),
-      ...(exam_date && { date: new Date(exam_date) }),
-      ...(rest.result !== undefined && { result: rest.result }),
-      ...(rest.observations !== undefined && { observations: rest.observations }),
+      ...(date && { date: new Date(date) }), // ✅ Corrigido: usa 'date'
+      ...(rest.results !== undefined && { results: rest.results }), // ✅ Corrigido: usa 'results'
+      ...(rest.lab !== undefined && { lab: rest.lab }), // ✅ Adicionado: campo lab
+      ...(rest.doctor_name !== undefined && { doctor_name: rest.doctor_name }), // ✅ Corrigido: usa 'doctor_name'
+      ...(rest.file_url !== undefined && { file_url: rest.file_url }), // ✅ Adicionado: campo file_url
       ...(rest.status && { status: rest.status as any }),
-      ...(rest.cost !== undefined && { cost: rest.cost }),
-      ...(rest.location !== undefined && { location: rest.location }),
-      ...(rest.responsible_doctor !== undefined && { responsible_doctor: rest.responsible_doctor }),
       ...(medical_record_id && {
         medical_record: {
           connect: { id: medical_record_id }
@@ -717,6 +861,11 @@ export class MedicalRecordsService {
         }
       })
     };
+    
+    // Sempre atualizar o doctor_name se disponível
+    if (doctorName) {
+      data.doctor_name = doctorName;
+    }
 
     return this.prisma.exam.update({
       where: { id },
@@ -749,12 +898,11 @@ export class MedicalRecordsService {
     const data: Prisma.documentCreateInput = {
       name: rest.name,
       type: rest.type,
-      file_path: rest.file_path || rest.file_url || '',
-      file_size: rest.file_size,
-      mime_type: rest.mime_type,
+      file_url: rest.file_url || '',
+
       description: rest.description,
       date: rest.date ? new Date(rest.date) : new Date(),
-      status: rest.status || 'active',
+
       medical_record: {
         connect: { id: medical_record_id }
       },

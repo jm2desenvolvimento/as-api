@@ -18,17 +18,17 @@ export class CreateExamDto {
   type: string;
 
   @IsDateString({}, { message: 'Data do exame deve estar em formato ISO válido' })
-  exam_date: string;
+  date: string; // ✅ Corrigido: agora usa 'date' como o schema
 
   @IsOptional()
   @IsString()
   @MaxLength(2000, { message: 'Resultado não pode exceder 2000 caracteres' })
-  result?: string;
+  results?: string; // ✅ Corrigido: agora usa 'results' como o schema
 
   @IsOptional()
   @IsString()
-  @MaxLength(1000, { message: 'Observações não podem exceder 1000 caracteres' })
-  observations?: string;
+  @MaxLength(100, { message: 'Laboratório não pode exceder 100 caracteres' })
+  lab?: string; // ✅ Adicionado: campo lab do schema
 
   @IsOptional()
   @IsString()
@@ -36,17 +36,12 @@ export class CreateExamDto {
   status?: string;
 
   @IsOptional()
-  @IsNumber({}, { message: 'Custo deve ser um número válido' })
-  @Min(0, { message: 'Custo não pode ser negativo' })
-  cost?: number;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(200, { message: 'Local do exame não pode exceder 200 caracteres' })
-  location?: string;
-
-  @IsOptional()
   @IsString()
   @MaxLength(200, { message: 'Médico responsável não pode exceder 200 caracteres' })
-  responsible_doctor?: string;
+  doctor_name?: string; // ✅ Corrigido: agora usa 'doctor_name' como o schema
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500, { message: 'URL do arquivo não pode exceder 500 caracteres' })
+  file_url?: string; // ✅ Adicionado: campo file_url do schema
 }

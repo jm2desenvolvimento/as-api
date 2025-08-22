@@ -125,6 +125,16 @@ export class RbacService {
   }
 
   /**
+   * Verificar se um usuário tem todas as permissões necessárias
+   */
+  async hasPermissions(userId: string, requiredPermissions: string[]): Promise<boolean> {
+    const userPermissions = await this.getUserPermissions(userId);
+    
+    // Verificar se o usuário tem todas as permissões necessárias
+    return requiredPermissions.every(permission => userPermissions.includes(permission));
+  }
+
+  /**
    * Normaliza uma permissão removendo apenas espaços extras
    * IMPORTANTE: Todas as permissões no sistema já usam underscore, não converter formatos
    */
@@ -136,33 +146,6 @@ export class RbacService {
     console.log(`[RBAC] Normalizando permissão: "${permission}" => "${trimmed}"`);
     
     return trimmed;
-  }
-
-  /**
-   * Verificar se usuário tem múltiplas permissões
-   */
-  async hasPermissions(userId: string, permissions: Permission[]): Promise<boolean> {
-    console.log(`🔍 [RbacService] Verificando permissões para usuário ${userId}`);
-    console.log(`📋 [RbacService] Permissões necessárias:`, permissions);
-    
-    // Obter permissões do usuário e normalizá-las para o formato padrão (com ponto)
-    const userPermissionsRaw = await this.getUserPermissions(userId);
-    const userPermissions = userPermissionsRaw.map(p => this.normalizePermission(p));
-    
-    console.log(`📋 [RbacService] Permissões do usuário (normalizadas):`, userPermissions);
-    
-    const hasAll = permissions.every(p => {
-      // Normalizar a permissão necessária para o formato padrão (com ponto)
-      const normalizedPermission = this.normalizePermission(p);
-      
-      // Verificar se a permissão normalizada existe nas permissões normalizadas do usuário
-      const hasPermission = userPermissions.includes(normalizedPermission);
-      console.log(`   - ${p} (normalizada: ${normalizedPermission}): ${hasPermission ? '✅' : '❌'}`);
-      return hasPermission;
-    });
-    
-    console.log(`🎯 [RbacService] Resultado final: ${hasAll ? '✅ AUTORIZADO' : '❌ NEGADO'}`);
-    return hasAll;
   }
 
   /**

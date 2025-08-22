@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CityHallModule } from './modules/cityhall/cityhall.module';
 import { PermissionModule } from './modules/permission/permission.module';
@@ -14,6 +15,7 @@ import { MedicalSchedulesModule } from './modules/medicalschedules/medicalschedu
 
 @Module({
   imports: [
+    PrismaModule,
     AuthModule,
     CityHallModule,
     PermissionModule,

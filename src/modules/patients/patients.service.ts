@@ -164,6 +164,13 @@ export class PatientsService {
   }
 
   async findAll(adminUser?: any) {
+    console.log('🔍 [PATIENTS SERVICE] findAll chamado com adminUser:', {
+      id: adminUser?.id,
+      role: adminUser?.role,
+      city_id: adminUser?.city_id,
+      health_unit_id: adminUser?.health_unit_id
+    });
+
     // ✅ FILTROS TERRITORIAIS baseados no usuário logado
     const where: any = { 
       role: 'PATIENT',
@@ -189,8 +196,10 @@ export class PatientsService {
         throw new ForbiddenException('Médico sem UBS vinculada não pode acessar prontuários');
       }
     }
+
+    console.log('🔍 [PATIENTS SERVICE] Filtro WHERE aplicado:', JSON.stringify(where, null, 2));
     
-    return prisma.user.findMany({
+    const result = await prisma.user.findMany({
       where,
       include: {
         profile: {
@@ -205,6 +214,56 @@ export class PatientsService {
         created_at: 'desc'
       }
     });
+
+    console.log('🔍 [PATIENTS SERVICE] Resultado da busca:', {
+      total_encontrado: result.length,
+      pacientes: result.map(p => ({
+        id: p.id,
+        name: p.profile?.name,
+        health_unit_id: p.health_unit_id,
+        city_id: p.city_id
+      }))
+    });
+
+    return result;
+  }
+
+  // Método de debug para buscar todos os pacientes sem filtros
+  async debugAllPatients() {
+    console.log('🔍 [PATIENTS SERVICE] debugAllPatients chamado');
+    
+    const result = await prisma.user.findMany({
+      where: {
+        role: 'PATIENT',
+        is_active: true
+      },
+      include: {
+        profile: {
+          include: {
+            profile_phones: true,
+            profile_emails: true,
+            profile_addresses: true,
+          }
+        }
+      },
+      orderBy: {
+        created_at: 'desc'
+      }
+    });
+
+    console.log('🔍 [PATIENTS SERVICE] Debug - Todos os pacientes:', {
+      total_encontrado: result.length,
+      pacientes: result.map(p => ({
+        id: p.id,
+        name: p.profile?.name,
+        health_unit_id: p.health_unit_id,
+        city_id: p.city_id,
+        role: p.role,
+        is_active: p.is_active
+      }))
+    });
+
+    return result;
   }
 
   async findOne(id: string) {
@@ -328,5 +387,102 @@ export class PatientsService {
     });
 
     return patients;
+  }
+
+  // Método de debug para verificar dados específicos do banco
+  async debugDatabaseCheck() {
+    console.log('🔍 [PATIENTS SERVICE] debugDatabaseCheck chamado');
+    
+    try {
+      // 1. Verificar todos os usuários com role DOCTOR
+      const doctors = await prisma.user.findMany({
+        where: { role: 'DOCTOR' },
+        select: {
+          id: true,
+          email: true,
+          role: true,
+          city_id: true,
+          health_unit_id: true,
+          profile: {
+            select: { name: true }
+          }
+        }
+      });
+
+      // 2. Verificar todos os usuários com role PATIENT
+      const patients = await prisma.user.findMany({
+        where: { role: 'PATIENT' },
+        select: {
+          id: true,
+          email: true,
+          role: true,
+          city_id: true,
+          health_unit_id: true,
+          is_active: true,
+          profile: {
+            select: { name: true }
+          }
+        }
+      });
+
+      // 3. Verificar todas as UBS
+      const healthUnits = await prisma.health_unit.findMany({
+        select: {
+          id: true,
+          name: true,
+          city_hall_id: true
+        }
+      });
+
+      console.log('🔍 [PATIENTS SERVICE] Debug - Dados do banco:', {
+        doctors: doctors.map(d => ({
+          id: d.id,
+          name: d.profile?.name,
+          email: d.email,
+          city_id: d.city_id,
+          health_unit_id: d.health_unit_id
+        })),
+        patients: patients.map(p => ({
+          id: p.id,
+          name: p.profile?.name,
+          email: p.email,
+          city_id: p.city_id,
+          health_unit_id: p.health_unit_id,
+          is_active: p.is_active
+        })),
+        healthUnits: healthUnits.map(h => ({
+          id: h.id,
+          name: h.name,
+          city_hall_id: h.city_hall_id
+        }))
+      });
+
+      return {
+        doctors: doctors.map(d => ({
+          id: d.id,
+          name: d.profile?.name,
+          email: d.email,
+          city_id: d.city_id,
+          health_unit_id: d.health_unit_id
+        })),
+        patients: patients.map(p => ({
+          id: p.id,
+          name: p.profile?.name,
+          email: p.email,
+          city_id: p.city_id,
+          health_unit_id: p.health_unit_id,
+          is_active: p.is_active
+        })),
+        healthUnits: healthUnits.map(h => ({
+          id: h.id,
+          name: h.name,
+          city_hall_id: h.city_hall_id
+        })),
+        message: 'Verifique os logs do backend para mais detalhes'
+      };
+    } catch (error) {
+      console.error('❌ [PATIENTS SERVICE] Erro ao verificar banco:', error);
+      throw error;
+    }
   }
 }

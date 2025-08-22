@@ -30,7 +30,6 @@ export class CreateConsultationDto {
   @MaxLength(1000, { message: 'Prescrições não podem exceder 1000 caracteres' })
   prescriptions?: string;
 
-
   @IsOptional()
   @IsString()
   @MaxLength(50, { message: 'Status não pode exceder 50 caracteres' })

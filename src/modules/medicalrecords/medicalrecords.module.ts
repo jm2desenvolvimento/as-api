@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MedicalRecordsService } from './medicalrecords.service';
+import { MedicalFilesService } from './medical-files.service';
 import { MedicalRecordsController } from './medicalrecords.controller';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthModule } from '../auth/auth.module';
@@ -9,7 +10,7 @@ import { ValidationPipe } from '@nestjs/common';
 @Module({
   imports: [AuthModule],
   controllers: [MedicalRecordsController],
-  providers: [MedicalRecordsService, PrismaService, { provide: APP_PIPE, useClass: ValidationPipe }],
-  exports: [MedicalRecordsService],
+  providers: [MedicalRecordsService, MedicalFilesService, PrismaService, { provide: APP_PIPE, useClass: ValidationPipe }],
+  exports: [MedicalRecordsService, MedicalFilesService],
 })
 export class MedicalRecordsModule {}

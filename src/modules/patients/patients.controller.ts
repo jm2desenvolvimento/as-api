@@ -69,6 +69,81 @@ export class PatientsController {
     }
   }
 
+  // Endpoint de debug para verificar dados do usuário e pacientes
+  @Get('debug/user-data')
+  @UseGuards(PermissionsGuard)
+  @Permissions(PERMISSIONS.PATIENT_VIEW)
+  debugUserData(@Req() req: Request) {
+    this.logger.log('=== ENDPOINT DEBUG /api/patients/debug/user-data (GET) ===');
+    
+    const user = req['user'];
+    this.logger.log('🔍 Dados do usuário logado:', {
+      id: user?.id,
+      role: user?.role,
+      city_id: user?.city_id,
+      health_unit_id: user?.health_unit_id,
+      permissions: user?.permissions
+    });
+
+    return {
+      user: {
+        id: user?.id,
+        role: user?.role,
+        city_id: user?.city_id,
+        health_unit_id: user?.health_unit_id,
+        permissions: user?.permissions
+      },
+      message: 'Verifique os logs do backend para mais detalhes'
+    };
+  }
+
+  // Endpoint de debug para verificar todos os pacientes e suas UBS
+  @Get('debug/all-patients')
+  @UseGuards(PermissionsGuard)
+  @Permissions(PERMISSIONS.PATIENT_VIEW)
+  async debugAllPatients(@Req() req: Request) {
+    this.logger.log('=== ENDPOINT DEBUG /api/patients/debug/all-patients (GET) ===');
+    
+    try {
+      // Buscar todos os pacientes sem filtros para debug
+      const allPatients = await this.patientsService.debugAllPatients();
+      
+      this.logger.log('🔍 Todos os pacientes encontrados:', allPatients);
+      
+      return {
+        total_patients: allPatients.length,
+        patients: allPatients.map(p => ({
+          id: p.id,
+          name: p.profile?.name,
+          health_unit_id: p.health_unit_id,
+          city_id: p.city_id,
+          role: p.role,
+          is_active: p.is_active
+        })),
+        message: 'Verifique os logs do backend para mais detalhes'
+      };
+    } catch (error) {
+      this.logger.error('❌ Erro ao buscar todos os pacientes:', error);
+      throw error;
+    }
+  }
+
+  // Endpoint de debug para verificar dados específicos do banco
+  @Get('debug/database-check')
+  @UseGuards(PermissionsGuard)
+  @Permissions(PERMISSIONS.PATIENT_VIEW)
+  async debugDatabaseCheck(@Req() req: Request) {
+    this.logger.log('=== ENDPOINT DEBUG /api/patients/debug/database-check (GET) ===');
+    
+    try {
+      const result = await this.patientsService.debugDatabaseCheck();
+      return result;
+    } catch (error) {
+      this.logger.error('❌ Erro ao verificar banco de dados:', error);
+      throw error;
+    }
+  }
+
   @Get(':id')
   @UseGuards(PermissionsGuard)
   @Permissions(PERMISSIONS.PATIENT_VIEW)

@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, Query, UseGuards, Req } from '@nestjs/common';
 import { NotFoundException } from '@nestjs/common';
 import { MedicalRecordsService } from './medicalrecords.service';
+import { MedicalFilesService } from './medical-files.service';
 import { PermissionsGuard } from '../auth/guards/permissions.guard';
 import { Permissions } from '../auth/decorators/permissions.decorator';
 import { PERMISSIONS } from '../auth/constants/permissions';
@@ -14,13 +15,17 @@ import {
   CreateExamDto,
   UpdateExamDto,
   CreateDocumentDto,
-  UpdateDocumentDto
+  UpdateDocumentDto,
+  UploadFileDto
 } from './dto';
 
 @Controller('medical-records')
 @UseGuards(PermissionsGuard)
 export class MedicalRecordsController {
-  constructor(private readonly medicalRecordsService: MedicalRecordsService) {}
+  constructor(
+    private readonly medicalRecordsService: MedicalRecordsService,
+    private readonly medicalFilesService: MedicalFilesService
+  ) {}
 
   @Get()
   @Permissions(PERMISSIONS.MEDICAL_RECORD_LIST)
@@ -191,5 +196,33 @@ export class MedicalRecordsController {
   @Permissions(PERMISSIONS.MEDICAL_RECORD_UPDATE)
   async deleteDocument(@Param('documentId') documentId: string) {
     return this.medicalRecordsService.deleteDocument(documentId);
+  }
+
+  // ========== ENDPOINTS PARA ARQUIVOS ==========
+  @Post('upload')
+  @Permissions(PERMISSIONS.MEDICAL_RECORD_UPDATE)
+  async uploadFile(
+    @Body() uploadFileDto: UploadFileDto,
+    @Req() req: any
+  ) {
+    return this.medicalFilesService.uploadFile(uploadFileDto, req.user.id);
+  }
+
+  @Get('files/:medicalRecordId')
+  @Permissions(PERMISSIONS.MEDICAL_RECORD_VIEW)
+  async getFiles(@Param('medicalRecordId') medicalRecordId: string) {
+    return this.medicalFilesService.getFilesByMedicalRecord(medicalRecordId);
+  }
+
+  @Get('files/download/:fileId')
+  @Permissions(PERMISSIONS.MEDICAL_RECORD_VIEW)
+  async downloadFile(@Param('fileId') fileId: string) {
+    return this.medicalFilesService.downloadFile(fileId);
+  }
+
+  @Delete('files/:fileId')
+  @Permissions(PERMISSIONS.MEDICAL_RECORD_UPDATE)
+  async deleteFile(@Param('fileId') fileId: string, @Req() req: any) {
+    return this.medicalFilesService.deleteFile(fileId, req.user.id);
   }
 }
