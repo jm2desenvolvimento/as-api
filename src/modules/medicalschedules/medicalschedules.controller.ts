@@ -89,6 +89,17 @@ export class MedicalSchedulesController {
     return this.medicalSchedulesService.findByDateRange(req.user, startDate, endDate, healthUnitId, doctorId);
   }
 
+  @Get('my-schedules')
+  @Permissions('doctor_schedule_view')
+  findMySchedules(
+    @Req() req: any,
+    @Query('start_date') startDate?: string,
+    @Query('end_date') endDate?: string,
+    @Query('status') status?: string
+  ) {
+    return this.medicalSchedulesService.findMySchedules(req.user, startDate, endDate, status);
+  }
+
   @Get(':id')
   @Permissions('medical_schedule_view')
   findOne(@Req() req: any, @Param('id') id: string) {

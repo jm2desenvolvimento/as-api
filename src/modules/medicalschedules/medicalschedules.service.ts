@@ -599,4 +599,77 @@ export class MedicalSchedulesService {
       }
     });
   }
+
+  async findMySchedules(user: any, startDate?: string, endDate?: string, status?: string) {
+    const dbUser = await this.getUserScope(user);
+    
+    // Verificar se o usuário é um médico
+    if (dbUser.role !== 'DOCTOR') {
+      throw new ForbiddenException('Apenas médicos podem acessar suas escalas');
+    }
+
+    const where: any = {
+      doctor_id: dbUser.id
+    };
+
+    if (status) {
+      where.status = status;
+    }
+
+    // Se forneceram datas, filtrar por período
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      where.OR = [
+        // Não recorrentes que sobrepõem o intervalo
+        {
+          AND: [
+            { start_datetime: { lte: end } },
+            { end_datetime: { gte: start } },
+          ],
+        },
+        // Recorrentes (legacy flags)
+        { is_recurring: true },
+      ];
+
+      // Limitar recorrentes por data de término de recorrência quando existir
+      where.AND = [
+        {
+          OR: [
+            { recurrence_end_date: null },
+            { recurrence_end_date: { gte: start } },
+          ],
+        },
+      ];
+    }
+
+    return this.prisma.medical_schedule.findMany({
+      where,
+      include: {
+        doctor: {
+          include: {
+            profile: {
+              include: {
+                profile_doctor: true
+              }
+            }
+          }
+        },
+        health_unit: true,
+        substitute_doctor: {
+          include: {
+            profile: {
+              include: {
+                profile_doctor: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        start_datetime: 'asc'
+      }
+    });
+  }
 }
