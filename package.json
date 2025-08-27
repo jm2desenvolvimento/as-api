@@ -20,9 +20,9 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "db:migrate": "npx prisma migrate dev",
     "db:generate": "npx prisma generate",
-    "db:seed": "npx ts-node prisma/seed.ts",
+    "db:seed-data": "npx ts-node prisma/seed.ts",
     "rbac:sync": "npx ts-node scripts/sync-rbac.ts",
-    "db:setup": "npm run db:migrate && npm run db:generate && npm run db:seed && npm run rbac:sync"
+    "db:setup": "npm run db:migrate && npm run db:generate && npm run db:seed-data && npm run rbac:sync"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
